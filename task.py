@@ -1,4 +1,3 @@
-
 from datetime import datetime, timedelta
 
 class Field:
@@ -81,12 +80,14 @@ class AddressBook:
     def get_upcoming_birthdays(self):
         upcoming_birthdays = []
         today = datetime.today()
-        next_week = today + timedelta(days=7)
         for record in self.data.values():
             if record.birthday:
                 birthday_date = datetime.strptime(record.birthday.value, "%d.%m.%Y")
-                if today <= birthday_date < next_week:
-                    upcoming_birthdays.append(record)
+                next_birthday_year = today.year if today.month < birthday_date.month or (today.month == birthday_date.month and today.day <= birthday_date.day) else today.year + 1
+                next_birthday = datetime(next_birthday_year, birthday_date.month, birthday_date.day)
+                days_until_birthday = (next_birthday - today).days
+                if days_until_birthday <= 7 and days_until_birthday >= 0:
+                    upcoming_birthdays.append((record, days_until_birthday))
         return upcoming_birthdays
 
 def add_contact(args, book):
@@ -126,7 +127,7 @@ def show_phone(args, book):
         return f"No phone number set for {name}"
     else:
         return f"Contact {name} not found"
-    
+
 def add_birthday(args, book):
     name, birthday = args
     record = book.find(name)
@@ -145,14 +146,14 @@ def show_birthday(args, book):
         return f"No birthday set for {name}"
     else:
         return f"Contact {name} not found"
-    
+
 def birthdays(args, book):
     upcoming_birthdays = book.get_upcoming_birthdays()
     if upcoming_birthdays:
-        return "\n".join(str(record) for record in upcoming_birthdays)
+        return "\n".join([f"{record.name.value}'s birthday in {days+1} days" for record, days in upcoming_birthdays])
     else:
         return "No upcoming birthdays"
-    
+
 def parse_input(user_input):
     return user_input.split(None, 2)
 
